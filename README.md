@@ -34,8 +34,8 @@
 
 方法1：線上執行 https://shihmin01ai.github.io/pdf-secretary
 
-方法2：本專案已配置好本地靜態伺服器環境。請在終端機中切換至本專案路徑，並啟動開發伺服器：
-
+方法2：本機執行
+本專案已配置好本地靜態伺服器環境。請在終端機中切換至本專案路徑，並啟動開發伺服器：
 ```bash
 # 1. 切換至專案目錄
 cd C:\Users\user\.gemini\antigravity-ide\scratch\pdf-secretary
@@ -43,7 +43,7 @@ cd C:\Users\user\.gemini\antigravity-ide\scratch\pdf-secretary
 # 2. 啟動伺服器 (預設在 http://localhost:3000)
 npm run dev
 ```
-方法2、啟動後，使用瀏覽器打開網址：
+啟動後，使用瀏覽器打開網址：
 👉 **[http://localhost:3000](http://localhost:3000)**
 
 即可直接開始使用 PDF 小秘書！
