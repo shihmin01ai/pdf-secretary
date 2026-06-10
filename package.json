@@ -1,0 +1,12 @@
+{
+  "name": "pdf-secretary",
+  "version": "1.0.0",
+  "description": "本地端 PDF 編輯工具 - 合併、分割、旋轉個別頁面",
+  "main": "index.html",
+  "scripts": {
+    "dev": "npx http-server -p 3000"
+  },
+  "dependencies": {
+    "http-server": "^14.1.1"
+  }
+}

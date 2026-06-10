@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="zh-TW" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PDF 小秘書 - 本地端合併、分割、旋轉與頁面編輯工具</title>
+  <!-- Google Fonts: Inter & Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <!-- Vanilla CSS Stylesheet -->
+  <link rel="stylesheet" href="styles.css">
+  <!-- PDF-Lib (For PDF manipulation: Merge, Split, Rotate, Save) -->
+  <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+  <!-- JSZip (For packing split PDF pages into a single ZIP archive) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <!-- PDF.js (For rendering PDF pages to canvas thumbnails) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+  <!-- App Container -->
+  <div class="app-container">
+    
+    <!-- Sidebar / Left Panel -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="logo">
+          <i data-lucide="file-text" class="logo-icon"></i>
+          <h1>PDF 小秘書</h1>
+        </div>
+        <button id="theme-toggle" class="btn-icon" title="切換深/淺色模式">
+          <i data-lucide="sun" class="icon-sun"></i>
+          <i data-lucide="moon" class="icon-moon"></i>
+        </button>
+      </div>
+
+      <!-- Drag & Drop Upload Zone -->
+      <div class="upload-section">
+        <div id="drop-zone" class="drop-zone">
+          <input type="file" id="file-input" multiple accept="application/pdf" class="file-input">
+          <i data-lucide="upload-cloud" class="upload-icon"></i>
+          <h3>將 PDF 檔案拖曳至此</h3>
+          <p>或點擊此處選擇檔案</p>
+          <span class="upload-hint">所有處理皆在本地端完成，絕不傳輸檔案</span>
+        </div>
+      </div>
+
+      <!-- Loaded Files List -->
+      <div class="loaded-files-container">
+        <div class="section-title">
+          <span>已載入檔案</span>
+          <button id="clear-all-btn" class="btn-text-danger" style="display: none;">全部清空</button>
+        </div>
+        <div id="files-list" class="files-list">
+          <div class="empty-files-text">尚未載入任何 PDF 檔案</div>
+        </div>
+      </div>
+
+      <!-- Output / Export Actions -->
+      <div class="export-section">
+        <div class="section-title">匯出設定</div>
+        
+        <!-- Batch Action Bar (In Sidebar) -->
+        <div id="batch-actions-panel" class="batch-actions-panel" style="display: none;">
+          <div class="batch-header">
+            <div class="batch-info">
+              <span class="badge" id="selected-count">0</span> 項已選取
+            </div>
+            <button id="batch-clear-btn" class="btn-icon-clear" title="取消選取">
+              <i data-lucide="x"></i>
+            </button>
+          </div>
+          <div class="batch-buttons">
+            <button id="batch-rotate-btn" class="btn btn-secondary" title="批次順時針旋轉 90°">
+              <i data-lucide="rotate-cw"></i> 旋轉
+            </button>
+            <button id="batch-delete-btn" class="btn btn-danger" title="批次刪除選取頁面">
+              <i data-lucide="trash-2"></i> 刪除
+            </button>
+          </div>
+        </div>
+
+        <div class="action-buttons-group">
+          <button id="export-merged-btn" class="btn btn-primary btn-block" disabled>
+            <i data-lucide="combine"></i>
+            <span>合併並下載 PDF</span>
+          </button>
+          <button id="export-split-btn" class="btn btn-secondary btn-block" disabled>
+            <i data-lucide="scissors"></i>
+            <span>分割並下載各頁面 (ZIP)</span>
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Workspace -->
+    <main class="main-workspace">
+      <!-- Toolbar -->
+      <header class="workspace-header">
+        <div class="workspace-info">
+          <h2>工作區</h2>
+          <span id="page-count-badge" class="page-count-badge" style="display: none;">共 0 頁</span>
+        </div>
+        
+        <div class="workspace-controls" id="workspace-controls" style="display: none;">
+          <button id="select-all-btn" class="btn btn-text">
+            <i data-lucide="check-square"></i> 全選
+          </button>
+          <button id="deselect-all-btn" class="btn btn-text">
+            <i data-lucide="square"></i> 取消全選
+          </button>
+          <div class="divider"></div>
+          <div class="zoom-controls">
+            <button id="zoom-out-btn" class="btn-icon btn-sm" title="縮小">
+              <i data-lucide="minus"></i>
+            </button>
+            <span id="zoom-label">中</span>
+            <button id="zoom-in-btn" class="btn-icon btn-sm" title="放大">
+              <i data-lucide="plus"></i>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <!-- Pages Grid Container -->
+      <div id="pages-grid-container" class="pages-grid-container empty">
+        <!-- Empty State -->
+        <div id="empty-state" class="empty-state">
+          <div class="empty-state-icon">
+            <i data-lucide="files"></i>
+          </div>
+          <h3>開始使用 PDF 小秘書</h3>
+          <p>從左側上傳或拖曳 PDF 檔案，即可在此處自由排序、旋轉或刪除頁面。</p>
+        </div>
+
+        <!-- Rendered Pages Grid -->
+        <div id="pages-grid" class="pages-grid zoom-medium"></div>
+      </div>
+    </main>
+
+  </div>
+
+  <!-- Loading Modal / Overlay -->
+  <div id="loading-overlay" class="loading-overlay" style="display: none;">
+    <div class="loading-card">
+      <div class="spinner"></div>
+      <h3 id="loading-message">正在處理 PDF 檔案...</h3>
+      <p>請稍候，一切處理都在本地完成</p>
+    </div>
+  </div>
+
+  <!-- Notification Toast -->
+  <div id="toast" class="toast"></div>
+
+  <!-- Core Logic Script -->
+  <script src="app.js"></script>
+</body>
+</html>
