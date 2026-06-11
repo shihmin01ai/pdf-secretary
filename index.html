@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
   <!-- Vanilla CSS Stylesheet -->
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css?v=1.2">
   <!-- PDF-Lib (For PDF manipulation: Merge, Split, Rotate, Save) -->
   <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
   <!-- JSZip (For packing split PDF pages into a single ZIP archive) -->
@@ -142,6 +142,228 @@
 
   </div>
 
+  <!-- PDF Editor Modal -->
+  <div id="pdf-editor-modal" class="editor-modal" style="display: none;">
+    <div class="editor-container">
+      
+      <!-- Editor Header -->
+      <header class="editor-header">
+        <div class="editor-title-container">
+          <i data-lucide="edit-3" class="editor-title-icon"></i>
+          <div>
+            <h2 id="editor-filename">編輯頁面</h2>
+            <span id="editor-page-index">頁面資訊</span>
+          </div>
+        </div>
+        
+        <!-- Undo/Redo & Save/Close -->
+        <div class="editor-header-actions">
+          <div class="zoom-controls" style="margin-right: 8px;">
+            <button id="editor-zoom-out-btn" class="btn-icon btn-sm" title="縮小">
+              <i data-lucide="minus"></i>
+            </button>
+            <span id="editor-zoom-label" style="font-size: 12px; font-weight: 600; width: 42px; text-align: center; color: var(--text-secondary);">100%</span>
+            <button id="editor-zoom-in-btn" class="btn-icon btn-sm" title="放大">
+              <i data-lucide="plus"></i>
+            </button>
+            <button id="editor-zoom-fit-btn" class="btn btn-secondary btn-sm" title="整頁檢視" style="padding: 4px 8px; font-size: 11px;">
+              整頁
+            </button>
+          </div>
+          <button id="editor-undo-btn" class="btn btn-secondary btn-sm" title="復原 (Ctrl+Z)" disabled>
+            <i data-lucide="undo-2"></i>
+          </button>
+          <button id="editor-redo-btn" class="btn btn-secondary btn-sm" title="重做 (Ctrl+Y)" disabled>
+            <i data-lucide="redo-2"></i>
+          </button>
+          <div class="divider"></div>
+          <button id="editor-cancel-btn" class="btn btn-secondary">取消</button>
+          <button id="editor-save-btn" class="btn btn-primary">
+            <i data-lucide="save"></i> 儲存變更
+          </button>
+        </div>
+      </header>
+
+      <!-- Editor Main Content Area -->
+      <div class="editor-main">
+        
+        <!-- Floating Toolbar -->
+        <div class="editor-toolbar">
+          <button id="tool-select" class="toolbar-btn active" title="選擇與移動項目 (V)">
+            <i data-lucide="mouse-pointer"></i>
+            <span>選取</span>
+          </button>
+          <button id="tool-draw" class="toolbar-btn" title="畫筆 (P)">
+            <i data-lucide="pencil"></i>
+            <span>畫筆</span>
+          </button>
+          <button id="tool-highlight" class="toolbar-btn" title="螢光筆 (H)">
+            <i data-lucide="highlighter"></i>
+            <span>螢光筆</span>
+          </button>
+          <button id="tool-eraser" class="toolbar-btn" title="橡皮擦 (E)">
+            <i data-lucide="eraser"></i>
+            <span>橡皮擦</span>
+          </button>
+          <div class="toolbar-divider"></div>
+          <button id="tool-text" class="toolbar-btn" title="新增文字 (T)">
+            <i data-lucide="type"></i>
+            <span>文字</span>
+          </button>
+          <button id="tool-shape-rect" class="toolbar-btn" title="新增矩形">
+            <i data-lucide="square"></i>
+            <span>矩形</span>
+          </button>
+          <button id="tool-shape-circle" class="toolbar-btn" title="新增圓形">
+            <i data-lucide="circle"></i>
+            <span>圓形</span>
+          </button>
+          <button id="tool-signature" class="toolbar-btn" title="新增簽名 (S)">
+            <i data-lucide="signature"></i>
+            <span>簽名</span>
+          </button>
+        </div>
+
+        <!-- Editor Workspace (Canvas + Overlays) -->
+        <div class="editor-workspace">
+          <div id="editor-viewport" class="editor-viewport">
+            <div id="editor-canvas-wrapper" class="editor-canvas-wrapper">
+              <canvas id="editor-bg-canvas"></canvas>
+              <div id="editor-text-layer" class="editor-text-layer"></div>
+              <canvas id="editor-draw-canvas"></canvas>
+              <div id="editor-overlay-container" class="editor-overlay-container"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Format / Properties Sidebar -->
+        <aside class="editor-sidebar" id="editor-properties-panel">
+          <div class="sidebar-section">
+            <h3>工具屬性</h3>
+            
+            <!-- Pen & Highlight Properties -->
+            <div id="prop-drawing-group" class="prop-group" style="display: none;">
+              <div class="prop-row">
+                <label>線條粗細</label>
+                <div class="slider-container">
+                  <input type="range" id="draw-size" min="1" max="40" value="5">
+                  <span id="draw-size-val">5px</span>
+                </div>
+              </div>
+              <div class="prop-row">
+                <label>選擇顏色</label>
+                <div class="color-palette" id="draw-color-palette"></div>
+              </div>
+            </div>
+
+            <!-- Text Properties -->
+            <div id="prop-text-group" class="prop-group" style="display: none;">
+              <div class="prop-row">
+                <label>文字大小</label>
+                <select id="text-size" style="width: 100%; padding: 8px 12px; border-radius: 8px; background-color: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-primary); font-size: 13px; outline: none; cursor: pointer;">
+                  <option value="10">10px</option>
+                  <option value="12">12px</option>
+                  <option value="14">14px</option>
+                  <option value="16" selected>16px</option>
+                  <option value="18">18px</option>
+                  <option value="20">20px</option>
+                  <option value="24">24px</option>
+                  <option value="28">28px</option>
+                  <option value="32">32px</option>
+                  <option value="36">36px</option>
+                  <option value="40">40px</option>
+                  <option value="48">48px</option>
+                  <option value="56">56px</option>
+                  <option value="64">64px</option>
+                  <option value="72">72px</option>
+                </select>
+              </div>
+              <div class="prop-row">
+                <label>字型風格</label>
+                <select id="text-font-family" style="width: 100%; padding: 8px 12px; border-radius: 8px; background-color: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-primary); font-size: 13px; outline: none; cursor: pointer;">
+                  <option value="sans-serif">黑體 / 微軟正黑體 (Sans-serif)</option>
+                  <option value="serif">明體 / 新細明體 (Serif)</option>
+                  <option value="kaiti">楷書 / 標楷體 (Kaiti)</option>
+                </select>
+              </div>
+              <div class="prop-row">
+                <label>選擇顏色</label>
+                <div class="color-palette" id="text-color-palette"></div>
+              </div>
+              <div class="prop-row">
+                <label>背景顏色</label>
+                <div class="color-palette" id="text-bg-color-palette"></div>
+              </div>
+            </div>
+
+            <!-- Shape Properties -->
+            <div id="prop-shape-group" class="prop-group" style="display: none;">
+              <div class="prop-row">
+                <label>邊框粗細</label>
+                <div class="slider-container">
+                  <input type="range" id="shape-stroke-size" min="1" max="20" value="2">
+                  <span id="shape-stroke-size-val">2px</span>
+                </div>
+              </div>
+              <div class="prop-row">
+                <label>填充形狀</label>
+                <div class="checkbox-row">
+                  <input type="checkbox" id="shape-fill-checkbox">
+                  <label for="shape-fill-checkbox">填滿內部</label>
+                </div>
+              </div>
+              <div class="prop-row">
+                <label>形狀顏色</label>
+                <div class="color-palette" id="shape-color-palette"></div>
+              </div>
+            </div>
+
+            <!-- Signature Properties -->
+            <div id="prop-signature-group" class="prop-group" style="display: none;">
+              <button id="add-new-sig-btn" class="btn btn-secondary btn-block">
+                <i data-lucide="plus"></i> 建立新簽名
+              </button>
+              <div class="saved-signatures-container">
+                <h4>已儲存的簽名</h4>
+                <div id="saved-signatures-list" class="saved-signatures-list">
+                  <div class="empty-sig-text">尚無儲存的簽名</div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Default selection state / hint -->
+            <div id="prop-select-hint" class="prop-group">
+              <p class="select-hint-text">請點選頁面上的項目以編輯其屬性，或使用上方工具新增內容。</p>
+            </div>
+          </div>
+        </aside>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Signature Pad Dialog -->
+  <div id="signature-dialog" class="sig-dialog-overlay" style="display: none;">
+    <div class="sig-dialog-card">
+      <div class="sig-dialog-header">
+        <h3>建立電子簽名</h3>
+        <button id="sig-close-btn" class="btn-icon btn-sm">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+      <div class="sig-dialog-body">
+        <div class="sig-pad-container">
+          <canvas id="signature-pad-canvas"></canvas>
+          <span class="sig-pad-hint">請在此處以滑鼠或觸控筆進行簽名</span>
+        </div>
+      </div>
+      <div class="sig-dialog-footer">
+        <button id="sig-clear-btn" class="btn btn-secondary">清除重寫</button>
+        <button id="sig-insert-btn" class="btn btn-primary" disabled>插入簽名</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Loading Modal / Overlay -->
   <div id="loading-overlay" class="loading-overlay" style="display: none;">
     <div class="loading-card">
@@ -155,6 +377,6 @@
   <div id="toast" class="toast"></div>
 
   <!-- Core Logic Script -->
-  <script src="app.js"></script>
+  <script src="app.js?v=1.2"></script>
 </body>
 </html>
