@@ -983,3 +983,624 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--border-color-hover);
 }
+
+/* PDF Page Editor Modal styles */
+.editor-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: var(--bg-app);
+  z-index: 80;
+  animation: fadeIn var(--transition-fast);
+}
+
+.editor-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  background-color: var(--bg-app);
+}
+
+.editor-header {
+  height: 70px;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border-color);
+  background-color: var(--bg-sidebar);
+  backdrop-filter: var(--glass-effect);
+  -webkit-backdrop-filter: var(--glass-effect);
+  z-index: 10;
+  flex-shrink: 0;
+}
+
+.editor-title-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.editor-title-icon {
+  width: 24px;
+  height: 24px;
+  color: var(--primary);
+}
+
+.editor-title-container h2 {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+  max-width: 250px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.editor-title-container span {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.editor-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.editor-main {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Vertical Toolbar */
+.editor-toolbar {
+  width: 80px;
+  background-color: var(--bg-sidebar);
+  border-right: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px 0;
+  gap: 8px;
+  z-index: 5;
+  flex-shrink: 0;
+  overflow-y: auto;
+}
+
+.toolbar-btn {
+  width: 60px;
+  height: 56px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  background: transparent;
+  border-radius: 10px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  gap: 4px;
+}
+
+.toolbar-btn:hover {
+  background-color: var(--border-color);
+  color: var(--text-primary);
+}
+
+.toolbar-btn.active {
+  background: var(--primary-gradient);
+  color: white;
+  box-shadow: var(--shadow-primary);
+  border-color: transparent;
+}
+
+.toolbar-btn i {
+  width: 18px;
+  height: 18px;
+}
+
+.toolbar-btn span {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: -0.2px;
+}
+
+.toolbar-divider {
+  width: 32px;
+  height: 1px;
+  background-color: var(--border-color);
+  margin: 4px 0;
+}
+
+/* Workspace Canvas Area */
+.editor-workspace {
+  flex: 1;
+  display: flex;
+  overflow: auto;
+  padding: 32px;
+  background-color: var(--bg-workspace);
+  position: relative;
+}
+
+.editor-workspace.tool-select {
+  cursor: grab;
+}
+
+.editor-workspace.grabbing {
+  cursor: grabbing !important;
+}
+
+.editor-viewport {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 100%;
+  min-height: 100%;
+  margin: auto;
+}
+
+.editor-canvas-wrapper {
+  position: relative;
+  box-shadow: var(--shadow-lg);
+  background-color: white;
+  border-radius: 4px;
+  overflow: visible;
+}
+
+#editor-bg-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  border-radius: 4px;
+}
+
+#editor-text-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.original-text-span {
+  position: absolute;
+  cursor: pointer;
+  pointer-events: auto;
+  background-color: rgba(99, 102, 241, 0.0);
+  border: 1px dashed transparent;
+  transition: background-color 0.15s, border-color 0.15s, border-style 0.15s;
+  box-sizing: border-box;
+  color: transparent;
+  user-select: none;
+  line-height: 1;
+}
+
+#editor-text-layer.active-tool-select .original-text-span {
+  border: 1px dashed rgba(99, 102, 241, 0.45);
+  background-color: rgba(99, 102, 241, 0.04);
+}
+
+.original-text-span:hover,
+#editor-text-layer.active-tool-select .original-text-span:hover {
+  background-color: rgba(99, 102, 241, 0.18);
+  border-color: var(--primary);
+  border-style: solid;
+}
+
+#editor-draw-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2;
+  background: transparent;
+  pointer-events: none; /* Controlled dynamically in JS */
+}
+
+/* Interactive elements container */
+.editor-overlay-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 3;
+  overflow: visible;
+  pointer-events: none;
+}
+
+/* Drag & Resize Elements styling */
+.editor-element {
+  position: absolute;
+  pointer-events: auto;
+  cursor: move;
+  border: 1px solid transparent;
+  user-select: none;
+  box-sizing: border-box;
+}
+
+.editor-element.selected {
+  border: 1px dashed var(--primary);
+  outline: none;
+}
+
+.element-delete-btn {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: var(--danger);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border: none;
+  font-size: 10px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--transition-fast);
+  z-index: 15;
+  box-shadow: var(--shadow-sm);
+}
+
+.element-resize-handle {
+  position: absolute;
+  bottom: -6px;
+  right: -6px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: white;
+  border: 2px solid var(--primary);
+  cursor: se-resize;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--transition-fast);
+  z-index: 15;
+}
+
+.editor-element.selected .element-delete-btn,
+.editor-element.selected .element-resize-handle {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Element Types */
+.editor-text-item textarea,
+.editor-text-item textarea:focus,
+.editor-text-item textarea:active {
+  width: 100%;
+  height: 100%;
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  padding: 2px 4px;
+  resize: none;
+  overflow: hidden;
+  font-family: inherit;
+  line-height: 1.2;
+  box-sizing: border-box;
+  word-break: break-all;
+  color: inherit;
+  font-size: inherit;
+  font-weight: 400;
+}
+
+.editor-shape-item svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  overflow: visible;
+}
+
+.editor-signature-item img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* Format properties sidebar */
+.editor-sidebar {
+  width: 280px;
+  background-color: var(--bg-sidebar);
+  border-left: 1px solid var(--border-color);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  overflow-y: auto;
+  backdrop-filter: var(--glass-effect);
+  -webkit-backdrop-filter: var(--glass-effect);
+  z-index: 5;
+  flex-shrink: 0;
+}
+
+.sidebar-section h3 {
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-primary);
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 8px;
+}
+
+.prop-group {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  animation: slideIn var(--transition-fast);
+}
+
+.prop-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.prop-row label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.2px;
+}
+
+.slider-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.slider-container input[type="range"] {
+  flex: 1;
+  accent-color: var(--primary);
+  height: 4px;
+  border-radius: 2px;
+  background-color: var(--border-color);
+  cursor: pointer;
+}
+
+.slider-container span {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  min-width: 40px;
+  text-align: right;
+}
+
+.color-palette {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+}
+
+.color-swatch {
+  aspect-ratio: 1;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: all var(--transition-fast);
+  box-shadow: inset 0 0 2px rgba(0,0,0,0.2);
+}
+
+.color-swatch:hover {
+  transform: scale(1.15);
+}
+
+.color-swatch.active {
+  border-color: var(--text-primary);
+  box-shadow: 0 0 0 2px var(--bg-app), inset 0 0 2px rgba(0,0,0,0.2);
+  transform: scale(1.1);
+}
+
+.color-swatch.transparent-swatch {
+  background: linear-gradient(135deg, transparent 43%, #ef4444 43%, #ef4444 57%, transparent 57%), #ffffff !important;
+  border: 1px solid var(--border-color) !important;
+}
+
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.checkbox-row input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+
+.checkbox-row label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  text-transform: none;
+  cursor: pointer;
+}
+
+.select-hint-text {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.6;
+  text-align: center;
+  padding: 40px 10px;
+}
+
+/* Saved signatures styling */
+.saved-signatures-container {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.saved-signatures-container h4 {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.saved-signatures-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 280px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.empty-sig-text {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-align: center;
+  padding: 24px;
+  border: 1px dashed var(--border-color);
+  border-radius: 8px;
+}
+
+.signature-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 8px;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.signature-item:hover {
+  border-color: var(--primary);
+  background-color: var(--bg-card-hover);
+}
+
+.signature-item img {
+  height: 36px;
+  max-width: 150px;
+  object-fit: contain;
+  background-color: white;
+  border-radius: 4px;
+  padding: 2px;
+}
+
+.delete-sig-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  transition: all var(--transition-fast);
+}
+
+.delete-sig-btn:hover {
+  color: var(--danger);
+  background-color: var(--danger-bg-subtle);
+}
+
+/* Signature dialog pad overlay */
+.sig-dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(11, 15, 25, 0.75);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 95;
+  animation: fadeIn var(--transition-fast);
+}
+
+.sig-dialog-card {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  width: 480px;
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: slideIn var(--transition-fast);
+}
+
+.sig-dialog-header {
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.sig-dialog-header h3 {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.sig-dialog-body {
+  padding: 24px;
+}
+
+.sig-pad-container {
+  border: 1px dashed var(--border-color);
+  border-radius: 8px;
+  background-color: white;
+  overflow: hidden;
+  position: relative;
+  aspect-ratio: 2 / 1;
+}
+
+#signature-pad-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  cursor: crosshair;
+}
+
+.sig-pad-hint {
+  position: absolute;
+  bottom: 8px;
+  left: 0;
+  width: 100%;
+  text-align: center;
+  font-size: 11px;
+  color: #94a3b8;
+  pointer-events: none;
+}
+
+.sig-dialog-footer {
+  padding: 16px 24px;
+  display: flex;
+  justify-content: space-between;
+  border-top: 1px solid var(--border-color);
+  background-color: rgba(0, 0, 0, 0.1);
+}
