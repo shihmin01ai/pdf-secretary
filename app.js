@@ -1130,9 +1130,30 @@ function setupPropertyControls() {
   const textSizeSelect = document.getElementById('text-size');
   if (textSizeSelect) {
     textSizeSelect.addEventListener('change', () => {
+      let val = textSizeSelect.value;
+      if (val === 'custom') {
+        const customVal = prompt('請輸入自訂字體大小 (px):', '22');
+        const parsed = parseInt(customVal);
+        if (isNaN(parsed) || parsed < 6 || parsed > 150) {
+          showToast('請輸入 6 至 150 之間的有效數字！', 'error');
+          const currentSize = activeElement ? (parseInt(activeElement.style.fontSize) || 16) : 16;
+          textSizeSelect.value = currentSize;
+          return;
+        }
+        val = String(parsed);
+        // Add as a temporary option
+        textSizeSelect.querySelectorAll('.temp-font-size-option').forEach(o => o.remove());
+        const opt = document.createElement('option');
+        opt.value = val;
+        opt.innerText = `${val}px`;
+        opt.className = 'temp-font-size-option';
+        textSizeSelect.insertBefore(opt, textSizeSelect.lastElementChild);
+        textSizeSelect.value = val;
+      }
+
       if (activeElement && activeElement.classList.contains('editor-text-item')) {
         saveHistoryState();
-        textSize = parseInt(textSizeSelect.value);
+        textSize = parseInt(val);
         activeElement.style.fontSize = `${textSize}px`;
       }
     });
