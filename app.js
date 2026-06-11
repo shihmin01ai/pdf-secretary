@@ -689,7 +689,10 @@ async function exportMergedPDF() {
   try {
     const mergedPdf = await PDFLib.PDFDocument.create();
 
-    for (const pageItem of state.pages) {
+    const selectedPages = state.pages.filter(p => p.selected);
+    const pagesToExport = selectedPages.length > 0 ? selectedPages : state.pages;
+
+    for (const pageItem of pagesToExport) {
       const file = state.files.get(pageItem.fileId);
       const pdfjsPage = await file.pdfjsDoc.getPage(pageItem.pageNumber);
       const totalRotation = (pdfjsPage.rotate + pageItem.rotation) % 360;
@@ -736,8 +739,11 @@ async function exportSplitPDF() {
   try {
     const zip = new JSZip();
 
-    for (let i = 0; i < state.pages.length; i++) {
-      const pageItem = state.pages[i];
+    const selectedPages = state.pages.filter(p => p.selected);
+    const pagesToExport = selectedPages.length > 0 ? selectedPages : state.pages;
+
+    for (let i = 0; i < pagesToExport.length; i++) {
+      const pageItem = pagesToExport[i];
       const file = state.files.get(pageItem.fileId);
       const pdfjsPage = await file.pdfjsDoc.getPage(pageItem.pageNumber);
       const totalRotation = (pdfjsPage.rotate + pageItem.rotation) % 360;
